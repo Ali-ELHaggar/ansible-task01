@@ -1,0 +1,66 @@
+---
+- name: Install Nginx and deploy Node.js app
+  hosts: ansible-1
+  become: true
+
+  tasks:
+    - name: Update apt cache (for Ubuntu/Debian systems)
+      apt:
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install npm (Node.js package manager)
+      apt:
+        name: npm
+        state: present
+        update_cache: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install git (if not already installed)
+      apt:
+        name: git
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Clone Node.js app repository
+      git:
+        repo: https://github.com/sabreensalama/dockerize-node-app-task.git
+        dest: /var/www/my_node_app
+        update: yes
+
+    - name: Install Node.js app dependencies
+      npm:
+        path: /var/www/my_node_app
+
+    - name: Edit listen configuration
+      replace:
+        path: /etc/nginx/sites-available/default
+        regexp: 'listen\s+80;'
+        replace: 'listen 8090;'
+      notify:
+        - Restart NGINX service
+
+    - name: Start the Node.js app
+      command: npm start
+      args:
+        chdir: /var/www/my_node_app
+
+  handlers:
+    - name: Restart NGINX service
+      become: true
+      service:
+        name: nginx
+        state: restarted

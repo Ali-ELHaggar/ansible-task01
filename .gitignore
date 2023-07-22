@@ -1,0 +1,7 @@
+.terraform
+.git
+templates
+.terraform.lock.hcl
+ansible.pem
+aws.tf
+portConf.sh
